@@ -12,30 +12,36 @@ public class RMIMiddleware extends Middleware {
     private static String s_serverName = "Middleware";
     private static String s_rmiPrefix = "group_17_";
 
-    private static String flights_ServerName = "Flights_Server";
-    private static String cars_ServerName = "Cars_Server";
-    private static String rooms_ServerName = "Rooms_Server";
+    private static String flights_ServerName = "Flights";
+    private static String cars_ServerName = "Cars";
+    private static String rooms_ServerName = "Rooms";
+
+    private static String flights_ServerHost= "";
+    private static String cars_ServerHost = "";
+    private static String rooms_ServerHost = "";
 
     public static void main(String[] args) {
 
         if (args.length == 3) {
-            flights_ServerName = args[0];
-            cars_ServerName = args[1];
-            rooms_ServerName = args[2];
+            flights_ServerHost = args[0];
+            cars_ServerHost = args[1];
+            rooms_ServerHost = args[2];
         }
 
         // Create the RMI server entries for flights, cars and rooms
         try {
 
 
-            Registry backendRegistry = LocateRegistry.getRegistry(3017);
+            Registry flights_registry = LocateRegistry.getRegistry(flights_ServerHost, 3017);
+            Registry cars_registry = LocateRegistry.getRegistry(cars_ServerHost, 3017);
+            Registry rooms_registry = LocateRegistry.getRegistry(rooms_ServerHost, 3017);
 
 
 
             // Look up the stubs of the existing servers
-            IResourceManager flightsStub = (IResourceManager) backendRegistry.lookup(s_rmiPrefix + flights_ServerName);
-            IResourceManager carsStub    = (IResourceManager) backendRegistry.lookup(s_rmiPrefix + cars_ServerName);
-            IResourceManager roomsStub   = (IResourceManager) backendRegistry.lookup(s_rmiPrefix + rooms_ServerName);
+            IResourceManager flightsStub = (IResourceManager) flights_registry.lookup(s_rmiPrefix + flights_ServerName);
+            IResourceManager carsStub    = (IResourceManager) cars_registry.lookup(s_rmiPrefix + cars_ServerName);
+            IResourceManager roomsStub   = (IResourceManager) rooms_registry.lookup(s_rmiPrefix + rooms_ServerName);
 
             RMIMiddleware middleware = new RMIMiddleware(s_serverName, flightsStub, carsStub, roomsStub);
 
