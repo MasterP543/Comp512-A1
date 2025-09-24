@@ -11,12 +11,15 @@ public class Middleware implements IResourceManager {
     protected IResourceManager flightsStub;
     protected IResourceManager carsStub;
     protected IResourceManager roomsStub;
+    protected IResourceManager customerStub;
 
-    public Middleware(String p_name, IResourceManager flightsStub, IResourceManager carsStub, IResourceManager roomsStub) {
+    public Middleware(String p_name, IResourceManager flightsStub, IResourceManager carsStub, IResourceManager roomsStub, IResourceManager customerStub
+    ) {
         this.m_name = p_name;
         this.flightsStub = flightsStub;
         this.carsStub = carsStub;
         this.roomsStub = roomsStub;
+        this.customerStub = customerStub;
     }
 
     @Override
