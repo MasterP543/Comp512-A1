@@ -8,10 +8,10 @@ MACHINES=(tr-open-01
 )
 
 tmux new-session \; \
-    split-window -h -t 0 \; \
-    split-window -v -t 0 \; \
-    split-window -v -t 1 \; \
-    split-window -v -t 2 \; \
+    split-window -v \; \
+    split-window -h \; \
+    split-window -h \; \
+    split-window -h \; \
     select-layout tiled \; \
     select-pane -t 1 \; \
     send-keys "ssh -t ${MACHINES[0]} \"cd $(pwd) > /dev/null; ./run_rmi.sh; echo -n 'Connected to '; hostname; ./run_server.sh Flights\"" C-m \; \

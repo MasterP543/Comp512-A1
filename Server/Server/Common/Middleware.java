@@ -11,7 +11,7 @@ public class Middleware implements IResourceManager {
     protected IResourceManager flightsStub;
     protected IResourceManager carsStub;
     protected IResourceManager roomsStub;
-    protected IResourceManager customerStub;
+    protected IResourceManager customersStub;
 
     public Middleware(String p_name, IResourceManager flightsStub, IResourceManager carsStub, IResourceManager roomsStub, IResourceManager customerStub
     ) {
@@ -19,7 +19,7 @@ public class Middleware implements IResourceManager {
         this.flightsStub = flightsStub;
         this.carsStub = carsStub;
         this.roomsStub = roomsStub;
-        this.customerStub = customerStub;
+        this.customersStub = customerStub;
     }
 
     @Override
@@ -45,7 +45,7 @@ public class Middleware implements IResourceManager {
 
     @Override
     public boolean newCustomer(int cid) throws RemoteException {
-        return false;
+        return customersStub.newCustomer(cid);
     }
 
     @Override
