@@ -40,7 +40,7 @@ public class Middleware implements IResourceManager {
 
     @Override
     public int newCustomer() throws RemoteException {
-        return 0;
+        return customersStub.newCustomer();
     }
 
     @Override
@@ -65,7 +65,7 @@ public class Middleware implements IResourceManager {
 
     @Override
     public boolean deleteCustomer(int customerID) throws RemoteException {
-        return false;
+        return customersStub.deleteCustomer(customerID);
     }
 
     @Override
@@ -85,7 +85,7 @@ public class Middleware implements IResourceManager {
 
     @Override
     public String queryCustomerInfo(int customerID) throws RemoteException {
-        return "";
+        return customersStub.queryCustomerInfo(customerID);
     }
 
     @Override
