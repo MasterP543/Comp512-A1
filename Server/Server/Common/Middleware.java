@@ -11,15 +11,15 @@ public class Middleware implements IResourceManager {
     protected IResourceManager flightsStub;
     protected IResourceManager carsStub;
     protected IResourceManager roomsStub;
-    protected IResourceManager customersStub;
+    protected ResourceManager customers;
 
-    public Middleware(String p_name, IResourceManager flightsStub, IResourceManager carsStub, IResourceManager roomsStub, IResourceManager customerStub
+    public Middleware(String p_name, IResourceManager flightsStub, IResourceManager carsStub, IResourceManager roomsStub, ResourceManager customers
     ) {
         this.m_name = p_name;
         this.flightsStub = flightsStub;
         this.carsStub = carsStub;
         this.roomsStub = roomsStub;
-        this.customersStub = customerStub;
+        this.customers = customers;
     }
 
     @Override
@@ -40,12 +40,12 @@ public class Middleware implements IResourceManager {
 
     @Override
     public int newCustomer() throws RemoteException {
-        return customersStub.newCustomer();
+        return customers.newCustomer();
     }
 
     @Override
     public boolean newCustomer(int cid) throws RemoteException {
-        return customersStub.newCustomer(cid);
+        return customers.newCustomer(cid);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class Middleware implements IResourceManager {
 
     @Override
     public boolean deleteCustomer(int customerID) throws RemoteException {
-        return customersStub.deleteCustomer(customerID);
+        return customers.deleteCustomer(customerID);
     }
 
     @Override
@@ -85,7 +85,7 @@ public class Middleware implements IResourceManager {
 
     @Override
     public String queryCustomerInfo(int customerID) throws RemoteException {
-        return customersStub.queryCustomerInfo(customerID);
+        return customers.queryCustomerInfo(customerID);
     }
 
     @Override
@@ -105,17 +105,66 @@ public class Middleware implements IResourceManager {
 
     @Override
     public boolean reserveFlight(int customerID, int flightNumber) throws RemoteException {
-        return flightsStub.reserveFlight(customerID, flightNumber);
+        String key = Flight.getKey(flightNumber);
+        String location = String.valueOf(flightNumber);
+        int price = queryFlightPrice(flightNumber);
+
+        // Read customer object if it exists (and read lock it)
+        Customer customer = (Customer) customers.readData(Customer.getKey(customerID));
+        if (customer == null)
+        {
+            Trace.warn("RM::reserveItem(" + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
+            return false;
+        }
+
+        if (flightsStub.reserveFlight(customerID, flightNumber)) {
+            customer.reserve(key, location, price);
+            customers.writeData(customer.getKey(), customer);
+            return true;
+        }
+        return false;
     }
 
     @Override
     public boolean reserveCar(int customerID, String location) throws RemoteException {
-        return carsStub.reserveCar(customerID, location);
+        String key = Car.getKey(location);
+        int price = queryCarsPrice(location);
+
+        // Read customer object if it exists (and read lock it)
+        Customer customer = (Customer) customers.readData(Customer.getKey(customerID));
+        if (customer == null)
+        {
+            Trace.warn("RM::reserveItem(" + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
+            return false;
+        }
+
+        if (carsStub.reserveCar(customerID, location)) {
+            customer.reserve(key, location, price);
+            customers.writeData(customer.getKey(), customer);
+            return true;
+        }
+        return false;
     }
 
     @Override
     public boolean reserveRoom(int customerID, String location) throws RemoteException {
-        return roomsStub.reserveRoom(customerID, location);
+        String key = Room.getKey(location);
+        int price = queryRoomsPrice(location);
+
+        // Read customer object if it exists (and read lock it)
+        Customer customer = (Customer) customers.readData(Customer.getKey(customerID));
+        if (customer == null)
+        {
+            Trace.warn("RM::reserveItem(" + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
+            return false;
+        }
+
+        if (roomsStub.reserveRoom(customerID, location)) {
+            customer.reserve(key, location, price);
+            customers.writeData(customer.getKey(), customer);
+            return true;
+        }
+        return false;
     }
 
     @Override

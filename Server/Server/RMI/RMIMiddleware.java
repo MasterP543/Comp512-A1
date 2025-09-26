@@ -1,6 +1,7 @@
 package Server.RMI;
 
 import Server.Common.Middleware;
+import Server.Common.ResourceManager;
 import Server.Interface.IResourceManager;
 
 import java.rmi.RemoteException;
@@ -15,20 +16,18 @@ public class RMIMiddleware extends Middleware {
     private static String flights_ServerName = "Flights";
     private static String cars_ServerName = "Cars";
     private static String rooms_ServerName = "Rooms";
-    private static String customers_ServerName = "Customers";
+    private static String customers_RM = "Customers";
 
     private static String flights_ServerHost= "";
     private static String cars_ServerHost = "";
     private static String rooms_ServerHost = "";
-    private static String customers_ServerHost = "";
 
     public static void main(String[] args) {
 
-        if (args.length == 4) {
+        if (args.length == 3) {
             flights_ServerHost = args[0];
             cars_ServerHost = args[1];
             rooms_ServerHost = args[2];
-            customers_ServerHost = args[3];
         }
 
         // Create the RMI server entries for flights, cars and rooms
@@ -36,15 +35,14 @@ public class RMIMiddleware extends Middleware {
             Registry flights_registry = LocateRegistry.getRegistry(flights_ServerHost, 3017);
             Registry cars_registry = LocateRegistry.getRegistry(cars_ServerHost, 3017);
             Registry rooms_registry = LocateRegistry.getRegistry(rooms_ServerHost, 3017);
-            Registry customers_registry = LocateRegistry.getRegistry(customers_ServerHost, 3017);
 
             // Look up the stubs of the existing servers
             IResourceManager flightsStub = (IResourceManager) flights_registry.lookup(s_rmiPrefix + flights_ServerName);
             IResourceManager carsStub = (IResourceManager) cars_registry.lookup(s_rmiPrefix + cars_ServerName);
             IResourceManager roomsStub = (IResourceManager) rooms_registry.lookup(s_rmiPrefix + rooms_ServerName);
-            IResourceManager customerStub = (IResourceManager) customers_registry.lookup(s_rmiPrefix + customers_ServerName);
+            ResourceManager customers = new ResourceManager(customers_RM);
 
-            RMIMiddleware middleware = new RMIMiddleware(s_serverName, flightsStub, carsStub, roomsStub, customerStub);
+            RMIMiddleware middleware = new RMIMiddleware(s_serverName, flightsStub, carsStub, roomsStub, customers);
 
             IResourceManager middlewareStub = (IResourceManager) UnicastRemoteObject.exportObject(middleware, 0);
 
@@ -77,7 +75,7 @@ public class RMIMiddleware extends Middleware {
 
     }
 
-    public RMIMiddleware(String s_serverName, IResourceManager flights, IResourceManager cars, IResourceManager rooms, IResourceManager customers) throws RemoteException {
+    public RMIMiddleware(String s_serverName, IResourceManager flights, IResourceManager cars, IResourceManager rooms, ResourceManager customers) throws RemoteException {
         super(s_serverName, flights, cars, rooms, customers);
     }
 
