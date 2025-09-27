@@ -5,7 +5,7 @@ import Server.Interface.IResourceManager;
 import java.rmi.RemoteException;
 import java.util.Vector;
 
-public class Middleware implements IResourceManager {
+public class Middleware  {
 
     protected String m_name = "";
     protected IResourceManager flightsStub;
@@ -169,7 +169,18 @@ public class Middleware implements IResourceManager {
 
     @Override
     public boolean bundle(int customerID, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException {
-        return false;
+        boolean reserved = false;
+
+        for (String flightNum : flightNumbers){
+            reserved = reserved || reserveFlight(customerID, Integer.parseInt(flightNum));
+        }
+
+       if (car) reserveCar(customerID, location);
+       if (room) reserveRoom(customerID, location);
+
+        return reserved;
+
+
     }
 
     @Override
