@@ -5,7 +5,7 @@ import Server.Interface.IResourceManager;
 import java.rmi.RemoteException;
 import java.util.Vector;
 
-public class Middleware implements IResourceManager {
+public class Middleware {
 
     protected String m_name;
     protected IResourceManager flightsStub;
