@@ -7,7 +7,7 @@ import java.util.Vector;
 
 public class Middleware implements IResourceManager {
 
-    protected String m_name = "";
+    protected String m_name;
     protected IResourceManager flightsStub;
     protected IResourceManager carsStub;
     protected IResourceManager roomsStub;
@@ -109,17 +109,14 @@ public class Middleware implements IResourceManager {
         String location = String.valueOf(flightNumber);
         int price = queryFlightPrice(flightNumber);
 
-        // Read customer object if it exists (and read lock it)
+        // Read a customer object if it exists (and read lock it)
         Customer customer = (Customer) customers.readData(Customer.getKey(customerID));
-        if (customer == null)
-        {
-            Trace.warn("RM::reserveItem(" + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
-            return false;
-        }
+        if (verifyCustomer(customerID, customer, key, location)) return false;
 
+        // Check if a flight is available
         if (flightsStub.reserveFlight(customerID, flightNumber)) {
-            customer.reserve(key, location, price);
-            customers.writeData(customer.getKey(), customer);
+            // Reserve flight and update customer object
+            reserve(customer, key, location, price);
             return true;
         }
         return false;
@@ -130,17 +127,14 @@ public class Middleware implements IResourceManager {
         String key = Car.getKey(location);
         int price = queryCarsPrice(location);
 
-        // Read customer object if it exists (and read lock it)
+        // Read a customer object if it exists (and read lock it)
         Customer customer = (Customer) customers.readData(Customer.getKey(customerID));
-        if (customer == null)
-        {
-            Trace.warn("RM::reserveItem(" + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
-            return false;
-        }
+        if (verifyCustomer(customerID, customer, key, location)) return false;
 
+        // Check if a car is available
         if (carsStub.reserveCar(customerID, location)) {
-            customer.reserve(key, location, price);
-            customers.writeData(customer.getKey(), customer);
+            // Reserve car and update customer object
+            reserve(customer, key, location, price);
             return true;
         }
         return false;
@@ -151,17 +145,14 @@ public class Middleware implements IResourceManager {
         String key = Room.getKey(location);
         int price = queryRoomsPrice(location);
 
-        // Read customer object if it exists (and read lock it)
+        // Read a customer object if it exists (and read lock it)
         Customer customer = (Customer) customers.readData(Customer.getKey(customerID));
-        if (customer == null)
-        {
-            Trace.warn("RM::reserveItem(" + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
-            return false;
-        }
+        if (verifyCustomer(customerID, customer, key, location)) return false;
 
+        // Check if a room is available
         if (roomsStub.reserveRoom(customerID, location)) {
-            customer.reserve(key, location, price);
-            customers.writeData(customer.getKey(), customer);
+            // Reserve room and update customer object
+            reserve(customer, key, location, price);
             return true;
         }
         return false;
@@ -169,7 +160,72 @@ public class Middleware implements IResourceManager {
 
     @Override
     public boolean bundle(int customerID, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException {
+        Customer customer = (Customer) customers.readData(Customer.getKey(customerID));
+        if (verifyCustomer(customerID, customer, "bundle", location)) return false;
+
+        // Check for valid flight numbers
+        Vector<Integer> parsedFlights = new Vector<>(flightNumbers.size());
+        for (String fn : flightNumbers) {
+            try {
+                parsedFlights.add(Integer.parseInt(fn));
+            } catch (NumberFormatException e) {
+                return false; // invalid flight number
+            }
+        }
+
+        // Check availability for flights
+        for (int flightNum : parsedFlights) {
+            if (flightsStub.queryFlight(flightNum) < 1) {
+                return false;
+            }
+        }
+
+        // Check car availability
+        if (car && carsStub.queryCars(location) < 1) return false;
+
+        // Check room availability
+        if (room && roomsStub.queryRooms(location) < 1) return false;
+
+        // Reserve flights
+        for (int flightNum : parsedFlights) {
+            String key = Flight.getKey(flightNum);
+            int price = queryFlightPrice(flightNum);
+
+            if (!flightsStub.reserveFlight(customerID, flightNum)) {
+                return false;
+            }
+
+            reserve(customer, key, location, price);
+        }
+
+        // Reserve a car if needed
+        if (car) {
+            if (!carsStub.reserveCar(customerID, location)) return false;
+            reserve(customer, Car.getKey(location), location, queryCarsPrice(location));
+        }
+
+        // Reserve a room if needed
+        if (room) {
+            if (!roomsStub.reserveRoom(customerID, location)) return false;
+            reserve(customer, Room.getKey(location), location, queryRoomsPrice(location));
+        }
+
+        return true;
+    }
+
+    // Verify a customer object exists
+    private static boolean verifyCustomer(int customerID, Customer customer, String key, String location) {
+        if (customer == null)
+        {
+            Trace.warn("RM::reserveItem(" + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
+            return true;
+        }
         return false;
+    }
+
+    private void reserve(Customer customer, String key, String location, int price) {
+        customer.reserve(key, location, price);
+        customers.writeData(customer.getKey(), customer);
     }
 
     @Override
