@@ -80,7 +80,7 @@ public class Middleware implements IResourceManager {
 
     @Override
     public int queryRooms(String location) throws RemoteException {
-        return roomsStub.queryCars(location);
+        return roomsStub.queryRooms(location);
     }
 
     @Override
@@ -191,9 +191,7 @@ public class Middleware implements IResourceManager {
             String key = Flight.getKey(flightNum);
             int price = queryFlightPrice(flightNum);
 
-            if (!flightsStub.reserveFlight(customerID, flightNum)) {
-                return false;
-            }
+            flightsStub.reserveFlight(customerID, flightNum);
 
             reserve(customer, key, location, price);
         }
