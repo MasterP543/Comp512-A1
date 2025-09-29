@@ -5,6 +5,7 @@ import Server.Common.ResourceManager;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.RemoteException;
 
 public class TCPMiddleware {
     private String flights_ServerHost;
@@ -50,7 +51,7 @@ public class TCPMiddleware {
             ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
             try {
                 Request req = (Request) ois.readObject();
-                Response res;
+                Response res = new Response();
 
                 System.out.println("Received request for " + req.method);
 
@@ -62,7 +63,9 @@ public class TCPMiddleware {
                     res = sendToServer(cars_ServerHost, socketPort, req);
                 } else if (method.contains("Room")) {
                     res = sendToServer(rooms_ServerHost, socketPort, req);
-                } else break;
+                } else if (method.contains("Customer")) {
+                    res = handleCustomer(req);
+                }
                 System.out.println("Sending response to client...");
                 oos.writeObject(res);
                 oos.flush();
@@ -96,5 +99,24 @@ public class TCPMiddleware {
             e.printStackTrace();
             return null;
         }
+    }
+    private Response handleCustomer(Request request) throws RemoteException {
+        String method = request.method;
+        Response response = new Response();
+
+        switch (method) {
+            case "AddCustomer": {
+                if (request.args.size() < 1) response.result = customers.newCustomer();
+                else response.result = customers.newCustomer(Integer.parseInt((String) request.args.get(0)));
+            }
+            case "DeleteCustomer": {
+                response.result = customers.deleteCustomer(Integer.parseInt((String) request.args.get(0)));
+            }
+            case "QueryCustomer": {
+                response.result = customers.queryCustomerInfo(Integer.parseInt((String) request.args.get(0)));
+            }
+        }
+
+        return response;
     }
 }
