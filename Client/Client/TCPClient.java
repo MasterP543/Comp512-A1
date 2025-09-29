@@ -50,7 +50,6 @@ public class TCPClient {
                     quit = true;
                 } else {
                     execute(command, oos, ois);
-
                 }
 
             }
