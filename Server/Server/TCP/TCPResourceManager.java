@@ -10,18 +10,23 @@ import java.net.Socket;
 
 public class TCPResourceManager {
 
-    private static int socketPort;
-    private static ResourceManager resourceManager = new ResourceManager("ResourceManager");
+    private static int socketPort = 3017;
+    private static ResourceManager resourceManager;
 
+    private TCPResourceManager(String serverName) {
+        resourceManager = new ResourceManager(serverName);
+    }
     public static void main(String[] args) {
-        socketPort = Integer.parseInt(args[0]);
-        TCPResourceManager server = new TCPResourceManager();
+        TCPResourceManager server = new TCPResourceManager(args[0]);
 
         try {
             server.runServer();
         }
-        catch (IOException ignored)
-        {}
+        catch (IOException e) {
+            System.err.println((char)27 + "[31;1mServer exception: " + (char)27 + "[0mUncaught exception");
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 
     public void runServer() throws IOException {
@@ -137,8 +142,10 @@ public class TCPResourceManager {
             oos.writeObject(res);
             oos.flush();
 
-        } catch (IOException | ClassNotFoundException ignored) {
-
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println((char)27 + "[31;1mServer exception: " + (char)27 + "[0mUncaught exception");
+            e.printStackTrace();
+            System.exit(1);
         }
         ois.close();
         oos.close();

@@ -32,36 +32,33 @@ public class TCPClient {
     }
 
     public void start() throws IOException {
+        socket = new Socket(serverHost, serverPort); // establish a socket with a server using the given port=3017
+
         while(true) {
             String command;
-            socket = new Socket(serverHost, serverPort); // establish a socket with a server using the given port=3017
 
             BufferedReader bufferedReader = new java.io.BufferedReader(new InputStreamReader(System.in)); // to read user's input
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream()); // open an output stream to the server...
-            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream()); // open an input stream from the server...
 
             try {
                 System.out.print((char)27 + "[32;1m\n>] " + (char)27 + "[0m");
                 command = bufferedReader.readLine().trim(); // read user's input
 
-                execute(command, oos, ois);
+                execute(command);
             }
             catch (IOException io) {
                 System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0m" + io.getLocalizedMessage());
                 io.printStackTrace();
                 System.exit(1);
             }
-
-            oos.close();
-            ois.close();
-            socket.close();
         }
     }
 
-    public void execute(String command, ObjectOutputStream oos, ObjectInputStream ois) throws IOException {
+    public void execute(String command) throws IOException {
         Vector<String> arguments = parse(command);
         Command cmd = Command.fromString((String)arguments.elementAt(0));
 
+        ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream()); // open an output stream to the server...
+        ObjectInputStream ois = new ObjectInputStream(socket.getInputStream()); // open an input stream from the server...
         Response response;
 
         switch (cmd) {
@@ -455,9 +452,13 @@ public class TCPClient {
                 checkArgumentsCount(1, arguments.size());
 
                 System.out.println("Quitting client");
+                socket.close();
                 System.exit(0);
             }
         }
+
+        oos.close();
+        ois.close();
     }
 
     private static Response sendRequest(ObjectOutputStream oos, Request request, ObjectInputStream ois, String error) throws IOException {
