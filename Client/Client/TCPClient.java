@@ -22,7 +22,6 @@ public class TCPClient {
 
         try {
             TCPClient client = new TCPClient();
-            socket = new Socket(serverHost, serverPort); // establish a socket with a server using the given port=3017
             client.start();
         } catch (Exception e) {
             System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0mUncaught exception");
@@ -35,25 +34,27 @@ public class TCPClient {
     public void start() throws IOException {
         while(true) {
             String command;
+            socket = new Socket(serverHost, serverPort); // establish a socket with a server using the given port=3017
+
+            BufferedReader bufferedReader = new java.io.BufferedReader(new InputStreamReader(System.in)); // to read user's input
+            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream()); // open an output stream to the server...
+            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream()); // open an input stream from the server...
+
             try {
-                BufferedReader bufferedReader = new java.io.BufferedReader(new InputStreamReader(System.in)); // to read user's input
-
-                ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream()); // open an output stream to the server...
-                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream()); // open an input stream from the server...
-
                 System.out.print((char)27 + "[32;1m\n>] " + (char)27 + "[0m");
                 command = bufferedReader.readLine().trim(); // read user's input
 
                 execute(command, oos, ois);
-
-                ois.close();
-                oos.close();
             }
             catch (IOException io) {
                 System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0m" + io.getLocalizedMessage());
                 io.printStackTrace();
                 System.exit(1);
             }
+
+            oos.close();
+            ois.close();
+            socket.close();
         }
     }
 
@@ -64,6 +65,17 @@ public class TCPClient {
         Response response;
 
         switch (cmd) {
+            case Help: {
+                if (arguments.size() == 1) {
+                    System.out.println(Command.description());
+                } else if (arguments.size() == 2) {
+                    Command l_cmd = Command.fromString((String)arguments.elementAt(1));
+                    System.out.println(l_cmd.toString());
+                } else {
+                    System.err.println((char)27 + "[31;1mCommand exception: " + (char)27 + "[0mImproper use of help command. Location \"help\" or \"help,<CommandName>\"");
+                }
+                break;
+            }
             case AddFlight: {
                 checkArgumentsCount(4, arguments.size());
 
@@ -94,7 +106,7 @@ public class TCPClient {
                 System.out.println("-Car Price: " + arguments.elementAt(3));
 
                 arguments.removeFirst();
-                Request request = new Request("addCars", Arrays.asList(arguments.toArray()));
+                Request request = new Request("AddCars", Arrays.asList(arguments.toArray()));
 
                 response = sendRequest(oos, request, ois, "Car could not be added");
                 if (response == null) break;

@@ -79,12 +79,11 @@ public class TCPMiddleware {
             ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
             ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
             try {
-                System.out.println("Handling request...");
                 Request req = (Request) ois.readObject();
-                System.out.println("Received request...");
                 Response res = new Response();
 
-                System.out.println(req.method);
+                System.out.println("Received request for " + req.method);
+
                 String method = req.method;
 
                 if (method.contains("Flight")) {
@@ -95,7 +94,6 @@ public class TCPMiddleware {
                     res = sendToServer(rooms_ServerHost, roomSocketPort, req);
                 }
                 System.out.println("Sending response to client...");
-                System.out.println("Response: " + res.result);
                 oos.writeObject(res);
                 oos.flush();
 
