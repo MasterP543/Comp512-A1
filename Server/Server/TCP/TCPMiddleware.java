@@ -1,6 +1,7 @@
 package Server.TCP;
 
 import Server.Common.Middleware;
+import Server.Common.ResourceManager;
 import Server.Interface.IResourceManager;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ public class TCPMiddleware {
     private static final int carSocketPort = 3001;
     private static final int roomSocketPort = 3002;
 
+    private static ResourceManager customers = new ResourceManager("Customers");
 
     private Response sendToServer(String host, int port, Request req) throws IOException {
         Socket socket = new Socket(host, port);
