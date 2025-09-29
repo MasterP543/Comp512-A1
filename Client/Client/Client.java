@@ -20,8 +20,7 @@ public abstract class Client
 
 	public abstract void connectServer();
 
-	public void start()
-	{
+	public void start() {
 		// Prepare for reading commands
 		System.out.println();
 		System.out.println("Location \"help\" for list of supported commands");

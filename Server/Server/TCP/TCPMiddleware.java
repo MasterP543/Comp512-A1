@@ -17,6 +17,9 @@ public class TCPMiddleware {
     private String cars_ServerHost;
     private String rooms_ServerHost;
     private static final int socketPort = 3017;
+    private static final int flightSocketPort = 3000;
+    private static final int carSocketPort = 3001;
+    private static final int roomSocketPort = 3002;
 
 
     private Response sendToServer(String host, int port, Request req) throws IOException {
@@ -69,30 +72,36 @@ public class TCPMiddleware {
 
         while (true) {
             Socket clientSocket = serverSocket.accept();
+            System.out.println("Connected to client... " + clientSocket.getInetAddress().toString());
 
+            ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
+            ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
             try {
-                ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
-                ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
-
+                System.out.println("Handling request...");
                 Request req = (Request) ois.readObject();
+                System.out.println("Received request...");
                 Response res = new Response();
 
+                System.out.println(req.method);
                 String method = req.method;
 
                 if (method.contains("Flight")) {
-                    res = sendToServer(flights_ServerHost, socketPort, req);
+                    res = sendToServer(flights_ServerHost, flightSocketPort, req);
                 } else if (method.contains("Car")) {
-                    res = sendToServer(cars_ServerHost, socketPort, req);
+                    res = sendToServer(cars_ServerHost, carSocketPort, req);
                 } else if (method.contains("Room")) {
-                    res = sendToServer(rooms_ServerHost, socketPort, req);
+                    res = sendToServer(rooms_ServerHost, roomSocketPort, req);
                 }
-
+                System.out.println("Sending response to client...");
+                System.out.println("Response: " + res.result);
                 oos.writeObject(res);
                 oos.flush();
 
 
             }
             catch (IOException | ClassNotFoundException ignored) {}
+            oos.close();
+            ois.close();
         }
 
 

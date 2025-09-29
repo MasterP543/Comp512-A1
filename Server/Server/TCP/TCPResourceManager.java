@@ -10,11 +10,11 @@ import java.net.Socket;
 
 public class TCPResourceManager {
 
-    int socketPort = 3017;
+    private static int socketPort;
     private static ResourceManager resourceManager = new ResourceManager("ResourceManager");
 
     public static void main(String[] args) {
-
+        socketPort = Integer.parseInt(args[0]);
         TCPResourceManager server = new TCPResourceManager();
 
         try {
@@ -39,10 +39,9 @@ public class TCPResourceManager {
     }
 
     public static void handleClient(Socket client) throws  IOException{
+        ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());
+        ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
         try {
-            ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());
-            ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
-
             Request req = (Request) ois.readObject();
             Response res = new Response();
 
@@ -51,11 +50,13 @@ public class TCPResourceManager {
 
                 switch (req.method){
                     case "AddFlight":
+                        System.out.println("Adding flight...");
                         res.result = resourceManager.addFlight(
-                                (int) req.args.get(0),
-                                (int) req.args.get(1),
-                                (int) req.args.get(2)
+                                Integer.parseInt((String) req.args.get(0)),
+                                Integer.parseInt((String) req.args.get(1)),
+                                Integer.parseInt((String) req.args.get(2))
                         );
+                        System.out.println("Result: " + res.result);
                         break;
 
                     case "AddCars":
@@ -142,12 +143,14 @@ public class TCPResourceManager {
                 }
 
 
-
+            System.out.println("Sending response to Middleware...");
             oos.writeObject(res);
             oos.flush();
 
         } catch (IOException | ClassNotFoundException ignored) {
 
         }
+        ois.close();
+        oos.close();
     }
 }

@@ -5,7 +5,7 @@ import Server.Interface.IResourceManager;
 import java.rmi.RemoteException;
 import java.util.Vector;
 
-public class Middleware {
+public class Middleware implements IResourceManager {
 
     protected String m_name;
     protected IResourceManager flightsStub;
@@ -22,7 +22,6 @@ public class Middleware {
         this.customers = customers;
     }
 
-    @Override
     public boolean addFlight(int flightNum, int flightSeats, int flightPrice) throws RemoteException {
         return flightsStub.addFlight(flightNum, flightSeats, flightPrice);
 
