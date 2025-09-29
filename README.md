@@ -14,3 +14,5 @@ To run the RMI client:
 cd Client
 ./run_client.sh [<server_hostname> [<server_rmi_name>]]
 ```
+
+
