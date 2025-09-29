@@ -46,9 +46,11 @@ public class TCPMiddleware {
         Socket clientSocket = serverSocket.accept();
         System.out.println("Connected to client... " + clientSocket.getInetAddress().toString());
 
+        ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
+        ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
+
         while (true) {
-            ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
-            ObjectInputStream ois = new ObjectInputStream(clientSocket.getInputStream());
+
             try {
                 Request req = (Request) ois.readObject();
                 Response res = new Response();
@@ -75,10 +77,9 @@ public class TCPMiddleware {
                 e.printStackTrace();
                 System.exit(1);
             }
-            oos.close();
-            ois.close();
+
         }
-        clientSocket.close();
+
     }
     private Response sendToServer(String host, int port, Request req) throws IOException {
         Socket socket = new Socket(host, port);

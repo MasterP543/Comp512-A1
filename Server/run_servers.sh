@@ -1,9 +1,9 @@
 #!/bin/bash 
 
-MACHINES=(tr-open-02
- tr-open-03
- tr-open-04
- tr-open-05
+MACHINES=(tr-open-12
+ tr-open-13
+ tr-open-14
+ tr-open-15
 )
 
 tmux new-session \; \
