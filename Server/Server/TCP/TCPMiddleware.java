@@ -6,13 +6,15 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
 
 public class TCPMiddleware {
     private String flights_ServerHost;
     private String cars_ServerHost;
     private String rooms_ServerHost;
     private static final int socketPort = 3017;
-
 
     public TCPMiddleware(String flights_ServerHost, String cars_ServerHost, String rooms_ServerHost) {
         this.flights_ServerHost = flights_ServerHost;
@@ -25,7 +27,6 @@ public class TCPMiddleware {
             String flights_ServerHost = args[0];
             String cars_ServerHost = args[1];
             String rooms_ServerHost = args[2];
-
             try {
                 TCPMiddleware middleware = new TCPMiddleware(flights_ServerHost, cars_ServerHost, rooms_ServerHost);
                 middleware.runServerMultiThread();
