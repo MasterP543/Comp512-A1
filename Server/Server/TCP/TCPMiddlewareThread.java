@@ -194,16 +194,16 @@ public class TCPMiddlewareThread extends Thread{
 
         switch (method) {
             case "AddCustomer": {
-                if (request.args.size() < 1) response.result = customers.newCustomer();
-                else response.result = customers.newCustomer(Integer.parseInt((String) request.args.get(0)));
+                if (request.args.isEmpty()) response.result = customers.newCustomer();
+                else response.result = customers.newCustomer(Integer.parseInt((String) request.args.getFirst()));
                 break;
             }
             case "DeleteCustomer": {
-                response.result = customers.deleteCustomer(Integer.parseInt((String) request.args.get(0)));
+                response.result = customers.deleteCustomer(Integer.parseInt((String) request.args.getFirst()));
                 break;
             }
             case "QueryCustomer": {
-                response.result = customers.queryCustomerInfo(Integer.parseInt((String) request.args.get(0)));
+                response.result = customers.queryCustomerInfo(Integer.parseInt((String) request.args.getFirst()));
                 break;
             }
         }
