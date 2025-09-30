@@ -95,7 +95,7 @@ public class TCPResourceManagerMultithread extends Thread{
                         break;
                     case "QueryFlightPrice":
                         res.result = resourceManager.queryFlightPrice(
-                                Integer.parseInt((String) req.args.getFirst())
+                                (int) req.args.getFirst()
                         );
 
                         break;
@@ -111,19 +111,19 @@ public class TCPResourceManagerMultithread extends Thread{
                         break;
                     case "ReserveFlight":
                         res.result = resourceManager.reserveFlight(
-                                Integer.parseInt((String) req.args.get(0)),
-                                Integer.parseInt((String) req.args.get(1))
+                                (int) req.args.get(0),
+                                (int) req.args.get(1)
                         );
                         break;
                     case "ReserveCar":
                         res.result = resourceManager.reserveCar(
-                                Integer.parseInt((String) req.args.get(0)),
+                                (int) req.args.get(0),
                                 (String) req.args.get(1)
                         );
                         break;
                     case "ReserveRoom":
                         res.result = resourceManager.reserveRoom(
-                                Integer.parseInt((String) req.args.get(0)),
+                                (int) req.args.get(0),
                                 (String) req.args.get(1)
                         );
                         break;

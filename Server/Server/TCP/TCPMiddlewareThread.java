@@ -21,13 +21,14 @@ public class TCPMiddlewareThread extends Thread{
     private String cars_ServerHost;
     private String rooms_ServerHost;
 
-    private static ResourceManager customers = new ResourceManager("Customers");
+    private static ResourceManager customers;
 
-    public TCPMiddlewareThread (String flights_ServerHost, String cars_ServerHost, String rooms_ServerHost, Socket socket) {
+    public TCPMiddlewareThread (String flights_ServerHost, String cars_ServerHost, String rooms_ServerHost, ResourceManager customers, Socket socket) {
         this.flights_ServerHost = flights_ServerHost;
         this.cars_ServerHost = cars_ServerHost;
         this.rooms_ServerHost = rooms_ServerHost;
-        this.socket=socket;
+        this.customers = customers;
+        this.socket = socket;
     }
 
     public void run() {
@@ -53,6 +54,8 @@ public class TCPMiddlewareThread extends Thread{
 
                 if (method.contains("Reserve")) {
                     res = handleReserve(req);
+                } else if (method.contains("Bundle")) {
+                    res = handleBundle(req);
                 } else if (method.contains("Flight")) {
                     res = sendToServer(flights_ServerHost, socketPort, req);
                 } else if (method.contains("Car")) {
@@ -101,63 +104,73 @@ public class TCPMiddlewareThread extends Thread{
                 String location = (String) request.args.get(1);
                 customers.reserveRoom(customerID, location);
             }
-        } else {
-            int customerID = Integer.parseInt((String) request.args.get(1));
-            Vector<String> flightNumbers = new Vector<String>();
-            for (int i = 0; i < request.args.size() - 5; ++i)
-            {
-                flightNumbers.addElement((String) request.args.get(2+i));
-            }
-            String location = (String) request.args.get(request.args.size()-3);
-            boolean car = Boolean.parseBoolean((String) request.args.get(request.args.size()-2));
-            boolean room = Boolean.parseBoolean((String) request.args.getLast());
-
-            for (String flightNumber : flightNumbers) {
-                List<Object> args = new ArrayList<>();
-                args.add(flightNumber);
-                Request req = new Request("QueryFlight", args);
-
-                response = sendToServer(flights_ServerHost, socketPort, req);
-                if (response == null) return badResponse();
-                if (Integer.parseInt((String) response.result) < 1) return badResponse();
-            }
-            for (String flightNumber : flightNumbers) {
-                List<Object> args = new ArrayList<>();
-                args.add(flightNumber);
-                Request req = new Request("ReserveFlight", args);
-
-                sendToServer(flights_ServerHost, socketPort, req);
-                customers.reserveFlight(customerID, Integer.parseInt(flightNumber));
-            }
-            List<Object> args = new ArrayList<>();
-            args.add(location);
-
-            Request req = new Request("QueryCars", args);
-            response = sendToServer(cars_ServerHost, socketPort, req);
-            if (response == null) return badResponse();
-            if (car && !((boolean) response.result)) {
-                response.result = false;
-            }
-            else {
-                req = new Request("ReserveCar", args);
-                sendToServer(cars_ServerHost, socketPort, req);
-                customers.reserveCar(customerID, location);
-                response.result = true;
-            }
-
-            req = new Request("QueryRooms", args);
-            response = sendToServer(rooms_ServerHost, socketPort, req);
-            if (response == null) return badResponse();
-            if (room && !((boolean) response.result)) {
-                response.result = false;
-            }
-            else {
-                req = new Request("ReserveRoom", args);
-                sendToServer(rooms_ServerHost, socketPort, req);
-                customers.reserveRoom(customerID, location);
-                response.result = true;
-            }
         }
+        return response;
+    }
+    private Response handleBundle(Request request) throws IOException {
+        Response response = new Response();
+
+        int customerID = Integer.parseInt((String) request.args.get(0));
+        Vector<Integer> flightNumbers = new Vector<Integer>();
+        for (int i = 0; i < request.args.size() - 4; i++)
+        {
+            flightNumbers.addElement(Integer.parseInt((String) request.args.get(1+i)));
+        }
+        String location = (String) request.args.get(request.args.size()-3);
+        boolean car = Boolean.parseBoolean((String) request.args.get(request.args.size()-2));
+        boolean room = Boolean.parseBoolean((String) request.args.getLast());
+
+        for (int flightNumber : flightNumbers) {
+            List<Object> args = new ArrayList<>();
+            args.add(Integer.toString(flightNumber));
+            Request req = new Request("QueryFlight", args);
+
+            response = sendToServer(flights_ServerHost, socketPort, req);
+            if (response == null) return badResponse();
+            if (((int) response.result) < 1) return badResponse();
+        }
+        for (int flightNumber : flightNumbers) {
+            List<Object> args = new ArrayList<>();
+            args.add(customerID);
+            args.add(flightNumber);
+            Request req = new Request("ReserveFlight", args);
+
+            sendToServer(flights_ServerHost, socketPort, req);
+            customers.reserveFlight(customerID, flightNumber);
+        }
+        
+        List<Object> args = new ArrayList<>();
+        args.add(location);
+
+        Request req = new Request("QueryCars", args);
+        response = sendToServer(cars_ServerHost, socketPort, req);
+        if (response == null) return badResponse();
+        if (car && (((int) response.result) < 1)) {
+            response.result = false;
+        }
+        else {
+            args.addFirst(customerID);
+            req = new Request("ReserveCar", args);
+            sendToServer(cars_ServerHost, socketPort, req);
+            customers.reserveCar(customerID, location);
+            response.result = true;
+        }
+
+        args.removeFirst();
+        req = new Request("QueryRooms", args);
+        response = sendToServer(rooms_ServerHost, socketPort, req);
+        if (response == null) return badResponse();
+        if (room && (((int) response.result) < 1)) {
+            response.result = false;
+        }
+        else {
+            args.addFirst(customerID);
+            req = new Request("ReserveRoom", args);
+            sendToServer(rooms_ServerHost, socketPort, req);
+            customers.reserveRoom(customerID, location);
+            response.result = true;
+        }
+
         return response;
     }
     private Response badResponse() {
@@ -193,7 +206,7 @@ public class TCPMiddlewareThread extends Thread{
         Response response = new Response();
 
         switch (method) {
-            case "AddCustomer": {
+            case "AddCustomerID": {
                 if (request.args.isEmpty()) response.result = customers.newCustomer();
                 else response.result = customers.newCustomer(Integer.parseInt((String) request.args.getFirst()));
                 break;

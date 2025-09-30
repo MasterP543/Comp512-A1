@@ -5,6 +5,7 @@ import Server.TCP.Response;
 
 import java.io.*;
 import java.net.Socket;
+import java.rmi.ServerException;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -57,6 +58,8 @@ public class TCPClient {
                 System.err.println((char)27 + "[31;1mClient exception: " + (char)27 + "[0m" + io.getLocalizedMessage());
                 io.printStackTrace();
                 System.exit(1);
+            } catch (IllegalArgumentException e) {
+                System.err.println((char)27 + "[31;1mCommand exception: " + (char)27 + "[0m" + e.getLocalizedMessage());
             }
         }
         oos.close();
@@ -171,13 +174,13 @@ public class TCPClient {
                 System.out.println("-Customer ID: " + arguments.elementAt(1));
 
                 arguments.removeFirst();
-                Request request = new Request("newCustomer", Arrays.asList(arguments.toArray()));
+                Request request = new Request("AddCustomerID", Arrays.asList(arguments.toArray()));
 
                 response = sendRequest(oos, request, ois, "Customer could not be added");
                 if (response == null) break;
 
                 if ((boolean) response.result) {
-                    System.out.println("Add customer ID: " + arguments.elementAt(1));
+                    System.out.println("Add customer ID: " + arguments.elementAt(0));
                 } else {
                     System.out.println("Customer could not be added");
                 }
@@ -460,10 +463,7 @@ public class TCPClient {
                 }
                 break;
             }
-
         }
-
-
     }
 
     private static Response sendRequest(ObjectOutputStream oos, Request request, ObjectInputStream ois, String error) throws IOException {
