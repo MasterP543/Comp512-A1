@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.EOFException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -23,11 +22,11 @@ public class TCPMiddlewareThread extends Thread{
 
     private static ResourceManager customers;
 
-    public TCPMiddlewareThread (String flights_ServerHost, String cars_ServerHost, String rooms_ServerHost, ResourceManager customers, Socket socket) {
+    public TCPMiddlewareThread (String flights_ServerHost, String cars_ServerHost, String rooms_ServerHost, Socket socket) {
         this.flights_ServerHost = flights_ServerHost;
         this.cars_ServerHost = cars_ServerHost;
         this.rooms_ServerHost = rooms_ServerHost;
-        this.customers = customers;
+        this.customers = new ResourceManager("Customers");
         this.socket = socket;
     }
 
@@ -86,21 +85,21 @@ public class TCPMiddlewareThread extends Thread{
         if (method.contains("Flight")) {
             response = sendToServer(flights_ServerHost, socketPort, request);
             if (response != null && (boolean) response.result) {
-                int customerID = Integer.parseInt((String) request.args.get(0));
-                int flightNumber = Integer.parseInt((String) request.args.get(1));
+                int customerID = (int) request.args.get(0);
+                int flightNumber = (int) request.args.get(1);
                 customers.reserveFlight(customerID, flightNumber);
             }
         } else if (method.contains("Car")) {
             response = sendToServer(cars_ServerHost, socketPort, request);
             if (response != null && (boolean) response.result) {
-                int customerID = Integer.parseInt((String) request.args.get(0));
+                int customerID = (int) request.args.get(0);
                 String location = (String) request.args.get(1);
                 customers.reserveCar(customerID, location);
             }
         } else if (method.contains("Room")) {
             response = sendToServer(rooms_ServerHost, socketPort, request);
             if (response != null && (boolean) response.result) {
-                int customerID = Integer.parseInt((String) request.args.get(0));
+                int customerID = (int) request.args.get(0);
                 String location = (String) request.args.get(1);
                 customers.reserveRoom(customerID, location);
             }
@@ -138,7 +137,7 @@ public class TCPMiddlewareThread extends Thread{
             sendToServer(flights_ServerHost, socketPort, req);
             customers.reserveFlight(customerID, flightNumber);
         }
-        
+
         List<Object> args = new ArrayList<>();
         args.add(location);
 
@@ -208,15 +207,15 @@ public class TCPMiddlewareThread extends Thread{
         switch (method) {
             case "AddCustomerID": {
                 if (request.args.isEmpty()) response.result = customers.newCustomer();
-                else response.result = customers.newCustomer(Integer.parseInt((String) request.args.getFirst()));
+                else response.result = customers.newCustomer((int) request.args.getFirst());
                 break;
             }
             case "DeleteCustomer": {
-                response.result = customers.deleteCustomer(Integer.parseInt((String) request.args.getFirst()));
+                response.result = customers.deleteCustomer((int) request.args.getFirst());
                 break;
             }
             case "QueryCustomer": {
-                response.result = customers.queryCustomerInfo(Integer.parseInt((String) request.args.getFirst()));
+                response.result = customers.queryCustomerInfo((int) request.args.getFirst());
                 break;
             }
         }

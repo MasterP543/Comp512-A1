@@ -1,27 +1,19 @@
 package Server.TCP;
 
-import Server.Common.ResourceManager;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
 
 public class TCPMiddleware {
     private String flights_ServerHost;
     private String cars_ServerHost;
     private String rooms_ServerHost;
-    private ResourceManager customers;
     private static final int socketPort = 3017;
 
     public TCPMiddleware(String flights_ServerHost, String cars_ServerHost, String rooms_ServerHost) {
         this.flights_ServerHost = flights_ServerHost;
         this.cars_ServerHost = cars_ServerHost;
         this.rooms_ServerHost = rooms_ServerHost;
-        this.customers = new ResourceManager("Customers");
     }
 
     public static void main(String[] args) {
@@ -46,7 +38,7 @@ public class TCPMiddleware {
         while (true)
         {
             Socket socket=serverSocket.accept();
-            new TCPMiddlewareThread(flights_ServerHost, cars_ServerHost, rooms_ServerHost, customers, socket).start();
+            new TCPMiddlewareThread(flights_ServerHost, cars_ServerHost, rooms_ServerHost, socket).start();
         }
     }
 }

@@ -5,7 +5,6 @@ import Server.TCP.Response;
 
 import java.io.*;
 import java.net.Socket;
-import java.rmi.ServerException;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -73,7 +72,6 @@ public class TCPClient {
         Vector<String> arguments = parse(command);
         Command cmd = Command.fromString((String)arguments.elementAt(0));
 
-
         Response response;
 
         switch (cmd) {
@@ -97,7 +95,11 @@ public class TCPClient {
                 System.out.println("-Flight Price: " + arguments.elementAt(3));
 
                 arguments.removeFirst();
-                Request request = new Request("AddFlight", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                for (int i = 0; i < arguments.size(); i++){
+                    args.add(Integer.parseInt(arguments.get(i)));
+                }
+                Request request = new Request("AddFlight", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Flight could not be added");
                 if (response == null) break;
@@ -118,7 +120,12 @@ public class TCPClient {
                 System.out.println("-Car Price: " + arguments.elementAt(3));
 
                 arguments.removeFirst();
-                Request request = new Request("AddCars", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                args.addFirst(arguments.getFirst());
+                for (int i = 1; i < arguments.size(); i++){
+                    args.add(Integer.parseInt(arguments.get(i)));
+                }
+                Request request = new Request("AddCars", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Car could not be added");
                 if (response == null) break;
@@ -139,7 +146,12 @@ public class TCPClient {
                 System.out.println("-Room Price: " + arguments.elementAt(3));
 
                 arguments.removeFirst();
-                Request request = new Request("AddRooms", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                args.addFirst(arguments.getFirst());
+                for (int i = 1; i < arguments.size(); i++){
+                    args.add(Integer.parseInt(arguments.get(i)));
+                }
+                Request request = new Request("AddRooms", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Room could not be added");
                 if (response == null) break;
@@ -174,7 +186,9 @@ public class TCPClient {
                 System.out.println("-Customer ID: " + arguments.elementAt(1));
 
                 arguments.removeFirst();
-                Request request = new Request("AddCustomerID", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                args.addFirst(Integer.parseInt(arguments.getFirst()));
+                Request request = new Request("AddCustomerID", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Customer could not be added");
                 if (response == null) break;
@@ -193,7 +207,9 @@ public class TCPClient {
                 System.out.println("-Flight Number: " + arguments.elementAt(1));
 
                 arguments.removeFirst();
-                Request request = new Request("DeleteFlight", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                args.addFirst(Integer.parseInt(arguments.getFirst()));
+                Request request = new Request("DeleteFlight", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Flight could not be deleted");
                 if (response == null) break;
@@ -250,7 +266,9 @@ public class TCPClient {
                 System.out.println("-Customer ID: " + arguments.elementAt(1));
 
                 arguments.removeFirst();
-                Request request = new Request("DeleteCustomer", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                args.addFirst(Integer.parseInt(arguments.getFirst()));
+                Request request = new Request("DeleteCustomer", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Customer could not be deleted");
                 if (response == null) break;
@@ -269,7 +287,9 @@ public class TCPClient {
                 System.out.println("-Flight Number: " + arguments.elementAt(1));
 
                 arguments.removeFirst();
-                Request request = new Request("QueryFlight", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                args.addFirst(Integer.parseInt(arguments.getFirst()));
+                Request request = new Request("QueryFlight", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Flight could not be queried");
                 if (response == null) break;
@@ -317,7 +337,9 @@ public class TCPClient {
                 System.out.println("-Customer ID: " + arguments.elementAt(1));
 
                 arguments.removeFirst();
-                Request request = new Request("QueryCustomer", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                args.addFirst(Integer.parseInt(arguments.getFirst()));
+                Request request = new Request("QueryCustomer", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Customer could not be queried");
                 if (response == null) break;
@@ -333,7 +355,9 @@ public class TCPClient {
                 System.out.println("-Flight Number: " + arguments.elementAt(1));
 
                 arguments.removeFirst();
-                Request request = new Request("QueryFlightPrice", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                args.addFirst(Integer.parseInt(arguments.getFirst()));
+                Request request = new Request("QueryFlightPrice", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Flight could not be queried");
                 if (response == null) break;
@@ -382,7 +406,10 @@ public class TCPClient {
                 System.out.println("-Flight Number: " + arguments.elementAt(2));
 
                 arguments.removeFirst();
-                Request request = new Request("ReserveFlight", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                args.addFirst(Integer.parseInt(arguments.getFirst()));
+                args.add(Integer.parseInt(arguments.get(1)));
+                Request request = new Request("ReserveFlight", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Flight could not be reserved");
                 if (response == null) break;
@@ -402,7 +429,10 @@ public class TCPClient {
                 System.out.println("-Car Location: " + arguments.elementAt(2));
 
                 arguments.removeFirst();
-                Request request = new Request("ReserveCar", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                args.addFirst(Integer.parseInt(arguments.getFirst()));
+                args.add(arguments.get(1));
+                Request request = new Request("ReserveCar", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Car could not be reserved");
                 if (response == null) break;
@@ -422,7 +452,10 @@ public class TCPClient {
                 System.out.println("-Room Location: " + arguments.elementAt(2));
 
                 arguments.removeFirst();
-                Request request = new Request("ReserveRoom", Arrays.asList(arguments.toArray()));
+                Vector<Object> args = new Vector<>();
+                args.addFirst(Integer.parseInt(arguments.getFirst()));
+                args.add(arguments.get(1));
+                Request request = new Request("ReserveRoom", Arrays.asList(args.toArray()));
 
                 response = sendRequest(oos, request, ois, "Room could not be reserved");
                 if (response == null) break;

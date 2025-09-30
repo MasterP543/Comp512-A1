@@ -39,30 +39,30 @@ public class TCPResourceManagerMultithread extends Thread{
                 switch (req.method) {
                     case "AddFlight":
                         res.result = resourceManager.addFlight(
-                                Integer.parseInt((String) req.args.get(0)),
-                                Integer.parseInt((String) req.args.get(1)),
-                                Integer.parseInt((String) req.args.get(2))
+                                (int) req.args.get(0),
+                                (int) req.args.get(1),
+                                (int) req.args.get(2)
                         );
                         break;
 
                     case "AddCars":
                         res.result = resourceManager.addCars(
                                 (String) req.args.get(0),
-                                Integer.parseInt((String) req.args.get(1)),
-                                Integer.parseInt((String) req.args.get(2))
+                                (int) req.args.get(1),
+                                (int) req.args.get(2)
                         );
                         break;
                     case "AddRooms":
                         res.result = resourceManager.addRooms(
                                 (String) req.args.get(0),
-                                Integer.parseInt((String) req.args.get(1)),
-                                Integer.parseInt((String) req.args.get(2))
+                                (int) req.args.get(1),
+                                (int) req.args.get(2)
                         );
                         break;
 
                     case "DeleteFlight":
                         res.result = resourceManager.deleteFlight(
-                                Integer.parseInt((String) req.args.getFirst())
+                                (int) req.args.getFirst()
                         );
                         break;
 
@@ -79,7 +79,7 @@ public class TCPResourceManagerMultithread extends Thread{
                         break;
                     case "QueryFlight":
                         res.result = resourceManager.queryFlight(
-                                Integer.parseInt((String) req.args.getFirst())
+                                (int) req.args.getFirst()
                         );
 
                         break;
