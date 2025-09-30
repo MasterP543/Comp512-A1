@@ -62,6 +62,7 @@ public class TCPMiddlewareThread extends Thread{
                     String method = req.method;
 
                     if (method.contains("Flight")) {
+
                         res = sendToServer(flights_ServerHost, socketPort, req);
                     } else if (method.contains("Car")) {
                         res = sendToServer(cars_ServerHost, socketPort, req);
