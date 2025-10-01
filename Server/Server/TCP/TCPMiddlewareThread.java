@@ -1,6 +1,6 @@
 package Server.TCP;
 
-import Server.Common.ResourceManager;
+import Server.Common.*;
 
 import java.io.IOException;
 import java.io.EOFException;
@@ -22,11 +22,11 @@ public class TCPMiddlewareThread extends Thread{
 
     private static ResourceManager customers;
 
-    public TCPMiddlewareThread (String flights_ServerHost, String cars_ServerHost, String rooms_ServerHost, Socket socket) {
+    public TCPMiddlewareThread (String flights_ServerHost, String cars_ServerHost, String rooms_ServerHost, Socket socket, ResourceManager customers) {
         this.flights_ServerHost = flights_ServerHost;
         this.cars_ServerHost = cars_ServerHost;
         this.rooms_ServerHost = rooms_ServerHost;
-        this.customers = new ResourceManager("Customers");
+        this.customers = customers;
         this.socket = socket;
     }
 
@@ -83,30 +83,27 @@ public class TCPMiddlewareThread extends Thread{
         Response response = new Response();
 
         if (method.contains("Flight")) {
-            response = sendToServer(flights_ServerHost, socketPort, request);
-            if (response != null && (boolean) response.result) {
-                int customerID = (int) request.args.get(0);
-                int flightNumber = (int) request.args.get(1);
-                customers.reserveFlight(customerID, flightNumber);
-            }
+            int customerID = (int) request.args.get(0);
+            int flightNumber = (int) request.args.get(1);
+            response.result = reserveFlight(customerID, flightNumber);
         } else if (method.contains("Car")) {
             response = sendToServer(cars_ServerHost, socketPort, request);
             if (response != null && (boolean) response.result) {
                 int customerID = (int) request.args.get(0);
                 String location = (String) request.args.get(1);
-                customers.reserveCar(customerID, location);
+                response.result = reserveCar(customerID, location);
             }
         } else if (method.contains("Room")) {
             response = sendToServer(rooms_ServerHost, socketPort, request);
             if (response != null && (boolean) response.result) {
                 int customerID = (int) request.args.get(0);
                 String location = (String) request.args.get(1);
-                customers.reserveRoom(customerID, location);
+                response.result = reserveRoom(customerID, location);
             }
         }
         return response;
     }
-    private Response handleBundle(Request request) throws IOException {
+    private synchronized Response handleBundle(Request request) throws IOException {
         Response response = new Response();
 
         int customerID = Integer.parseInt((String) request.args.get(0));
@@ -121,54 +118,46 @@ public class TCPMiddlewareThread extends Thread{
 
         for (int flightNumber : flightNumbers) {
             List<Object> args = new ArrayList<>();
-            args.add(Integer.toString(flightNumber));
+            args.add(flightNumber);
             Request req = new Request("QueryFlight", args);
 
             response = sendToServer(flights_ServerHost, socketPort, req);
             if (response == null) return badResponse();
             if (((int) response.result) < 1) return badResponse();
         }
-        for (int flightNumber : flightNumbers) {
-            List<Object> args = new ArrayList<>();
-            args.add(customerID);
-            args.add(flightNumber);
-            Request req = new Request("ReserveFlight", args);
-
-            sendToServer(flights_ServerHost, socketPort, req);
-            customers.reserveFlight(customerID, flightNumber);
-        }
 
         List<Object> args = new ArrayList<>();
         args.add(location);
 
-        Request req = new Request("QueryCars", args);
-        response = sendToServer(cars_ServerHost, socketPort, req);
-        if (response == null) return badResponse();
-        if (car && (((int) response.result) < 1)) {
-            response.result = false;
-        }
-        else {
-            args.addFirst(customerID);
-            req = new Request("ReserveCar", args);
-            sendToServer(cars_ServerHost, socketPort, req);
-            customers.reserveCar(customerID, location);
-            response.result = true;
+        if (car) {
+            Request req = new Request("QueryCars", args);
+            response = sendToServer(cars_ServerHost, socketPort, req);
+            if (response == null) return badResponse();
+            if ((int) response.result < 1) {
+                response.result = false;
+                return response;
+            }
         }
 
-        args.removeFirst();
-        req = new Request("QueryRooms", args);
-        response = sendToServer(rooms_ServerHost, socketPort, req);
-        if (response == null) return badResponse();
-        if (room && (((int) response.result) < 1)) {
-            response.result = false;
+        if (room) {
+            Request req = new Request("QueryRooms", args);
+            response = sendToServer(rooms_ServerHost, socketPort, req);
+            if (response == null) return badResponse();
+            if ((int) response.result < 1) {
+                response.result = false;
+                return response;
+            }
         }
-        else {
-            args.addFirst(customerID);
-            req = new Request("ReserveRoom", args);
-            sendToServer(rooms_ServerHost, socketPort, req);
-            customers.reserveRoom(customerID, location);
-            response.result = true;
+
+
+        for (int flightNumber : flightNumbers) {
+            reserveFlight(customerID, flightNumber);
         }
+
+        reserveCar(customerID, location);
+        reserveRoom(customerID, location);
+
+        response.result = true;
 
         return response;
     }
@@ -205,9 +194,12 @@ public class TCPMiddlewareThread extends Thread{
         Response response = new Response();
 
         switch (method) {
+            case "AddCustomer": {
+                response.result = customers.newCustomer();
+                break;
+            }
             case "AddCustomerID": {
-                if (request.args.isEmpty()) response.result = customers.newCustomer();
-                else response.result = customers.newCustomer((int) request.args.getFirst());
+                response.result = customers.newCustomer((int) request.args.getFirst());
                 break;
             }
             case "DeleteCustomer": {
@@ -221,4 +213,116 @@ public class TCPMiddlewareThread extends Thread{
         }
         return response;
     }
+
+
+    public boolean reserveFlight(int customerID, int flightNumber) throws IOException {
+        String key = Flight.getKey(flightNumber);
+        String location = String.valueOf(flightNumber);
+
+        // Check if a flight is available and get its price
+        Response res = sendToServer(flights_ServerHost, socketPort, new Request("QueryFlightPrice", List.of(flightNumber)));
+        int price;
+        if (res != null) {
+            price = (int) res.result;
+        } else {
+            return false;
+        }
+
+        try {
+            if (customers.queryCustomerInfo(customerID).isEmpty()) {
+                Trace.warn("RM::reserveItem(" + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
+                return false;
+            }
+        } catch (RemoteException e) {}
+
+        // Read a customer object if it exists (and read lock it)
+        Customer customer = customers.getCustomer(customerID);
+
+        // Reserve the flight
+        Request request = new Request("ReserveFlight", List.of(customerID, flightNumber ));
+        Response response = sendToServer(flights_ServerHost, socketPort, request);
+        if (response != null && (boolean) response.result) {
+
+            // update the customer's reservations
+            updateCustomerReservations(customer, key, location, price);
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean reserveCar(int customerID, String location) throws IOException {
+        String key = Car.getKey(location);
+
+        // Check if a car is available and get its price
+        Response res = sendToServer(cars_ServerHost, socketPort, new Request("QueryCarsPrice", List.of(location)));
+        int price;
+        if (res != null) {
+            price = (int) res.result;
+        } else {
+            return false;
+        }
+
+        try {
+            if (customers.queryCustomerInfo(customerID).isEmpty()) {
+                Trace.warn("RM::reserveItem(" + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
+                return false;
+            }
+        } catch (RemoteException e) {}
+
+        // Read a customer object if it exists (and read lock it)
+        Customer customer = customers.getCustomer(customerID);
+
+        // Reserve the Car
+        Request request = new Request("ReserveCar", List.of(customerID, location ));
+        Response response = sendToServer(cars_ServerHost, socketPort, request);
+        if (response != null && (boolean) response.result) {
+
+            // update the customer's reservations
+            updateCustomerReservations(customer, key, location, price);
+
+            return true;
+        }
+        return false;
+    }
+
+
+    public boolean reserveRoom(int customerID, String location) throws IOException {
+        String key = Room.getKey(location);
+
+        // Check if a room is available and get its price
+        Response res = sendToServer(rooms_ServerHost, socketPort, new Request("QueryRoomsPrice", List.of(location)));
+        int price;
+        if (res != null) {
+            price = (int) res.result;
+        } else {
+            return false;
+        }
+
+        try {
+            if (customers.queryCustomerInfo(customerID).isEmpty()) {
+                Trace.warn("RM::reserveItem(" + customerID + ", " + key + ", " + location + ")  failed--customer doesn't exist");
+                return false;
+            }
+        } catch (RemoteException e) {}
+
+        // Read a customer object if it exists (and read lock it)
+        Customer customer = customers.getCustomer(customerID);
+
+        // Reserve the Room
+        Request request = new Request("ReserveRoom", List.of(customerID, location ));
+        Response response = sendToServer(rooms_ServerHost, socketPort, request);
+        if (response != null && (boolean) response.result) {
+            updateCustomerReservations(customer, key, location, price);
+            return true;
+        }
+
+        return false;
+    }
+
+    public synchronized void updateCustomerReservations(Customer customer, String key, String location, int price){
+        customer.reserve(key, location, price);
+        customers.updateCustomerReservations(customer);
+    }
+
 }

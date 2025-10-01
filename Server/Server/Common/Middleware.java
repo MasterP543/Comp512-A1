@@ -229,4 +229,6 @@ public class Middleware implements IResourceManager {
     public String getName() throws RemoteException {
         return m_name;
     }
+
+
 }

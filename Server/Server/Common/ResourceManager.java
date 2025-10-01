@@ -11,7 +11,7 @@ import java.util.*;
 import java.rmi.RemoteException;
 import java.io.*;
 
-public class ResourceManager implements IResourceManager, Serializable
+public class ResourceManager implements IResourceManager
 {
 	protected String m_name = "";
 	protected RMHashMap m_data = new RMHashMap();
@@ -373,5 +373,17 @@ public class ResourceManager implements IResourceManager, Serializable
 	{
 		return m_name;
 	}
+
+	public Customer getCustomer(int CustomerID) {
+		return (Customer)readData(Customer.getKey(CustomerID));
+	}
+
+	public void updateCustomerReservations(Customer customer) {
+		writeData(customer.getKey(), customer);
+	}
+
+
+
+
 }
  
