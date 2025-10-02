@@ -64,7 +64,23 @@ public class Middleware implements IResourceManager {
 
     @Override
     public boolean deleteCustomer(int customerID) throws RemoteException {
-        return customers.deleteCustomer(customerID);
+        Customer customer = (Customer) customers.readData(Customer.getKey(customerID));
+        RMHashMap reservations = customer.getReservations();
+        for (String reservedKey : reservations.keySet())
+        {
+            ReservedItem reserveditem = customer.getReservedItem(reservedKey);
+            Trace.info("RM::deleteCustomer(" + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times");
+            String key = reserveditem.getKey();
+            ReservableItem item = (ReservableItem)customers.readData(key);
+            if (item instanceof Flight) {
+                String flightKey = ((Flight) item).getKey();
+                flightsStub.deleteCustomer()
+            }
+
+        }
+        customers.removeData(customer.getKey());
+        Trace.info("RM::deleteCustomer(" + customerID + ") succeeded");
+        return true;
     }
 
     @Override

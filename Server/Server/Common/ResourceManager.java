@@ -317,32 +317,16 @@ public class ResourceManager implements IResourceManager
 	public boolean deleteCustomer(int customerID) throws RemoteException
 	{
 		Trace.info("RM::deleteCustomer(" + customerID + ") called");
-		Customer customer = (Customer)readData(Customer.getKey(customerID));
-		if (customer == null)
-		{
-			Trace.warn("RM::deleteCustomer(" + customerID + ") failed--customer doesn't exist");
-			return false;
-		}
-		else
-		{            
-			// Increase the reserved numbers of all reservable items which the customer reserved. 
- 			RMHashMap reservations = customer.getReservations();
-			for (String reservedKey : reservations.keySet())
-			{        
-				ReservedItem reserveditem = customer.getReservedItem(reservedKey);
-				Trace.info("RM::deleteCustomer(" + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times");
-				ReservableItem item  = (ReservableItem)readData(reserveditem.getKey());
-				Trace.info("RM::deleteCustomer(" + customerID + ") has reserved " + reserveditem.getKey() + " which is reserved " +  item.getReserved() +  " times and is still available " + item.getCount() + " times");
-				item.setReserved(item.getReserved() - reserveditem.getCount());
-				item.setCount(item.getCount() + reserveditem.getCount());
-				writeData(item.getKey(), item);
-			}
 
-			// Remove the customer from the storage
-			removeData(customer.getKey());
-			Trace.info("RM::deleteCustomer(" + customerID + ") succeeded");
-			return true;
-		}
+        // Increase the reserved numbers of the reservable item which the customer reserved.
+        ReservableItem item  = (ReservableItem)readData(reserveditem.getKey());
+        Trace.info("RM::deleteCustomer(" + customerID + ") has reserved " + reserveditem.getKey() + " which is reserved " +  item.getReserved() +  " times and is still available " + item.getCount() + " times");
+        item.setReserved(item.getReserved() - reserveditem.getCount());
+        item.setCount(item.getCount() + reserveditem.getCount());
+        writeData(item.getKey(), item);
+
+        return true;
+
 	}
 
 	// Adds flight reservation to this customer
