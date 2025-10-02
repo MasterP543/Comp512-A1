@@ -115,6 +115,7 @@ public class TCPMiddlewareThread extends Thread{
         String location = (String) request.args.get(request.args.size()-3);
         boolean car = Boolean.parseBoolean((String) request.args.get(request.args.size()-2));
         boolean room = Boolean.parseBoolean((String) request.args.getLast());
+        Vector<Integer> reservedFlights = new Vector<Integer>();
 
         for (int flightNumber : flightNumbers) {
             List<Object> args = new ArrayList<>();
@@ -137,6 +138,9 @@ public class TCPMiddlewareThread extends Thread{
                 response.result = false;
                 return response;
             }
+
+            if (!reserveCar(customerID, location)) {
+            }
         }
 
         if (room) {
@@ -151,7 +155,12 @@ public class TCPMiddlewareThread extends Thread{
 
 
         for (int flightNumber : flightNumbers) {
-            reserveFlight(customerID, flightNumber);
+            if (!reserveFlight(customerID, flightNumber)){
+                deleteFlightsReservations(customerID, reservedFlights);
+                response.result = false;
+                return response;
+            }
+            reservedFlights.add(flightNumber);
         }
 
         reserveCar(customerID, location);
@@ -161,6 +170,16 @@ public class TCPMiddlewareThread extends Thread{
 
         return response;
     }
+
+    private void deleteFlightsReservations(int customerID, Vector<Integer> reservedFlights) {
+        Customer customer = customers.getCustomer(customerID);
+
+        for (int flightNumber : reservedFlights) {
+            customer.getReservations().remove(Flight.getKey(flightNumber));
+        }
+
+    }
+
     private Response badResponse() {
         Response response = new Response();
         response.result = false;
