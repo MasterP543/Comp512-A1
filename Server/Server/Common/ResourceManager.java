@@ -22,7 +22,7 @@ public class ResourceManager implements IResourceManager
 	}
 
 	// Reads a data item
-	protected RMItem readData(String key)
+	public RMItem readData(String key)
 	{
 		synchronized(m_data) {
 			RMItem item = m_data.get(key);
@@ -42,7 +42,7 @@ public class ResourceManager implements IResourceManager
 	}
 
 	// Remove the item out of storage
-	protected void removeData(String key)
+	public void removeData(String key)
 	{
 		synchronized(m_data) {
 			m_data.remove(key);
@@ -316,17 +316,8 @@ public class ResourceManager implements IResourceManager
 
 	public boolean deleteCustomer(int customerID) throws RemoteException
 	{
-		Trace.info("RM::deleteCustomer(" + customerID + ") called");
-
-        // Increase the reserved numbers of the reservable item which the customer reserved.
-        ReservableItem item  = (ReservableItem)readData(reserveditem.getKey());
-        Trace.info("RM::deleteCustomer(" + customerID + ") has reserved " + reserveditem.getKey() + " which is reserved " +  item.getReserved() +  " times and is still available " + item.getCount() + " times");
-        item.setReserved(item.getReserved() - reserveditem.getCount());
-        item.setCount(item.getCount() + reserveditem.getCount());
-        writeData(item.getKey(), item);
-
-        return true;
-
+		// Not implemented
+		return false;
 	}
 
 	// Adds flight reservation to this customer
@@ -351,6 +342,36 @@ public class ResourceManager implements IResourceManager
 	public boolean bundle(int customerId, Vector<String> flightNumbers, String location, boolean car, boolean room) throws RemoteException
 	{
 		return false;
+	}
+
+	@Override
+	public boolean removeReservationFlight(String key, int count) throws RemoteException {
+		ReservableItem item  = (ReservableItem)readData(key);
+		item.setReserved(item.getReserved() - count);
+		item.setCount(item.getCount() + count);
+		writeData(item.getKey(), item);
+
+		return true;
+	}
+
+	@Override
+	public boolean removeReservationCar(String key, int count) throws RemoteException {
+		ReservableItem item  = (ReservableItem)readData(key);
+		item.setReserved(item.getReserved() - count);
+		item.setCount(item.getCount() + count);
+		writeData(item.getKey(), item);
+
+		return true;
+	}
+
+	@Override
+	public boolean removeReservationRoom(String key, int count) throws RemoteException {
+		ReservableItem item  = (ReservableItem)readData(key);
+		item.setReserved(item.getReserved() - count);
+		item.setCount(item.getCount() + count);
+		writeData(item.getKey(), item);
+
+		return true;
 	}
 
 	public String getName() throws RemoteException

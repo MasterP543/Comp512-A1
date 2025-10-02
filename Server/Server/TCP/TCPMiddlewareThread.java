@@ -189,7 +189,7 @@ public class TCPMiddlewareThread extends Thread{
         }
     }
 
-    private Response handleCustomer(Request request) throws RemoteException {
+    private Response handleCustomer(Request request) throws IOException {
         String method = request.method;
         Response response = new Response();
 
@@ -203,7 +203,35 @@ public class TCPMiddlewareThread extends Thread{
                 break;
             }
             case "DeleteCustomer": {
-                response.result = customers.deleteCustomer((int) request.args.getFirst());
+                int customerID = (int) request.args.getFirst();
+                Customer customer = (Customer) customers.readData(Customer.getKey(customerID));
+                RMHashMap reservations = customer.getReservations();
+                for (String reservedKey : reservations.keySet())
+                {
+                    ReservedItem reserveditem = customer.getReservedItem(reservedKey);
+                    Trace.info("RM::deleteCustomer(" + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times");
+                    String key = reserveditem.getKey();
+                    int count = reserveditem.getCount();
+                    Vector<Object> args = new Vector<>();
+                    args.add(key);
+                    args.add(count);
+
+                    String classType = reserveditem.toString();
+                    if (classType.contains("flight")) {
+                        Request req = new Request("RemoveReservationFlight", args);
+                        response = sendToServer(flights_ServerHost, socketPort, req);
+                    }
+                    if (classType.contains("car")) {
+                        Request req = new Request("RemoveReservationCar", args);
+                        response = sendToServer(cars_ServerHost, socketPort, req);
+                    }
+                    if (classType.contains("room")) {
+                        Request req = new Request("RemoveReservationRoom", args);
+                        response = sendToServer(rooms_ServerHost, socketPort, req);
+                    }
+                }
+                customers.removeData(customer.getKey());
+                Trace.info("RM::deleteCustomer(" + customerID + ") succeeded");
                 break;
             }
             case "QueryCustomer": {

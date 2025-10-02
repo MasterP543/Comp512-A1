@@ -127,6 +127,24 @@ public class TCPResourceManagerMultithread extends Thread{
                                 (String) req.args.get(1)
                         );
                         break;
+                    case "RemoveReservationFlight":
+                        res.result = resourceManager.removeReservationFlight(
+                                (String) req.args.getFirst(),
+                                (int) req.args.get(1)
+                        );
+                        break;
+                    case "RemoveReservationCar":
+                        res.result = resourceManager.removeReservationCar(
+                                (String) req.args.getFirst(),
+                                (int) req.args.get(1)
+                        );
+                        break;
+                    case "RemoveReservationRoom":
+                        res.result = resourceManager.removeReservationRoom(
+                                (String) req.args.getFirst(),
+                                (int) req.args.get(1)
+                        );
+                        break;
                 }
                 System.out.println("Success, sending response...");
                 oos.writeObject(res);

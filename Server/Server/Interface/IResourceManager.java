@@ -199,7 +199,18 @@ public interface IResourceManager extends Remote
      * @return Success
      */
     public boolean bundle(int customerID, Vector<String> flightNumbers, String location, boolean car, boolean room)
-	throws RemoteException; 
+	throws RemoteException;
+
+    /**
+     * Remove a reservation on a flight by increasing seat count
+     *
+     * @return Success
+     */
+    public boolean removeReservationFlight(String key, int count) throws RemoteException;
+
+    public boolean removeReservationCar(String key, int count) throws RemoteException;
+
+    public boolean removeReservationRoom(String key, int count) throws RemoteException;
 
     /**
      * Convenience for probing the resource manager.

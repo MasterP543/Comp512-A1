@@ -73,9 +73,15 @@ public class Middleware implements IResourceManager {
             String key = reserveditem.getKey();
             ReservableItem item = (ReservableItem)customers.readData(key);
             if (item instanceof Flight) {
-                String flightKey = ((Flight) item).getKey();
-                flightsStub.deleteCustomer()
+                flightsStub.removeReservationFlight(((Flight)item).getKey(), ((Flight)item).getCount());
             }
+            if (item instanceof Car) {
+                carsStub.removeReservationCar(((Car)item).getKey(), ((Car)item).getCount());
+            }
+            if (item instanceof Room) {
+                roomsStub.removeReservationRoom(((Room)item).getKey(), ((Room)item).getCount());
+            }
+
 
         }
         customers.removeData(customer.getKey());
@@ -224,6 +230,21 @@ public class Middleware implements IResourceManager {
         }
 
         return true;
+    }
+
+    @Override
+    public boolean removeReservationFlight(String key, int count) throws RemoteException {
+        return flightsStub.removeReservationFlight(key, count);
+    }
+
+    @Override
+    public boolean removeReservationCar(String key, int count) throws RemoteException {
+        return carsStub.removeReservationCar(key, count);
+    }
+
+    @Override
+    public boolean removeReservationRoom(String key, int count) throws RemoteException {
+        return roomsStub.removeReservationRoom(key, count);
     }
 
     // Verify a customer object exists
