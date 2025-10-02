@@ -36,6 +36,10 @@ public class TCPClient {
         ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream()); // open an output stream to the server...
         ObjectInputStream ois = new ObjectInputStream(socket.getInputStream()); // open an input stream from the server...
 
+        // Prepare for reading commands
+        System.out.println();
+        System.out.println("Location \"help\" for list of supported commands");
+
         boolean quit = false;
         while(!quit) {
             String command;
@@ -46,7 +50,7 @@ public class TCPClient {
                 System.out.print((char)27 + "[32;1m\n>] " + (char)27 + "[0m");
                 command = bufferedReader.readLine().trim(); // read user's input
 
-                if (command.equals("Quit") ) {
+                if (command.equalsIgnoreCase("quit")) {
                     quit = true;
                 } else {
                     execute(command, oos, ois);
