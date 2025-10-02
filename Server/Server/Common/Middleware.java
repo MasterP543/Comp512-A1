@@ -71,18 +71,17 @@ public class Middleware implements IResourceManager {
             ReservedItem reserveditem = customer.getReservedItem(reservedKey);
             Trace.info("RM::deleteCustomer(" + customerID + ") has reserved " + reserveditem.getKey() + " " +  reserveditem.getCount() +  " times");
             String key = reserveditem.getKey();
-            ReservableItem item = (ReservableItem)customers.readData(key);
-            if (item instanceof Flight) {
-                flightsStub.removeReservationFlight(((Flight)item).getKey(), ((Flight)item).getCount());
+            int count = reserveditem.getCount();
+            String classType = reserveditem.toString();
+            if (classType.contains("flight")) {
+                flightsStub.removeReservationFlight(key, count);
             }
-            if (item instanceof Car) {
-                carsStub.removeReservationCar(((Car)item).getKey(), ((Car)item).getCount());
+            if (classType.contains("car")) {
+                carsStub.removeReservationCar(key, count);
             }
-            if (item instanceof Room) {
-                roomsStub.removeReservationRoom(((Room)item).getKey(), ((Room)item).getCount());
+            if (classType.contains("room")) {
+                roomsStub.removeReservationRoom(key, count);
             }
-
-
         }
         customers.removeData(customer.getKey());
         Trace.info("RM::deleteCustomer(" + customerID + ") succeeded");
