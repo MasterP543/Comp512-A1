@@ -185,6 +185,7 @@ public class Middleware implements IResourceManager {
 
         // Check for valid flight numbers
         Vector<Integer> parsedFlights = new Vector<>(flightNumbers.size());
+        Vector<Integer> reservedFlights = new Vector<>();
         for (String fn : flightNumbers) {
             try {
                 parsedFlights.add(Integer.parseInt(fn));
@@ -210,21 +211,52 @@ public class Middleware implements IResourceManager {
         for (int flightNum : parsedFlights) {
             String key = Flight.getKey(flightNum);
             int price = queryFlightPrice(flightNum);
+            reservedFlights.add(flightNum);
 
-            flightsStub.reserveFlight(customerID, flightNum);
+           if(!flightsStub.reserveFlight(customerID, flightNum)) {
+               for (int fn : parsedFlights) {
+                   String r_key = Flight.getKey(fn);
+                   int count = flightsStub.queryFlight(fn);
 
+                   flightsStub.removeReservationFlight(r_key, count);
+
+                   customer.getReservations().remove(r_key);
+               }
+           }
             reserve(customer, key, location, price);
         }
 
         // Reserve a car if needed
         if (car) {
-            if (!carsStub.reserveCar(customerID, location)) return false;
+            if (!carsStub.reserveCar(customerID, location)) {
+                for (int flightNum : reservedFlights) {
+                    String key = Flight.getKey(flightNum);
+                    int count = flightsStub.queryFlight(flightNum);
+
+                    flightsStub.removeReservationFlight(key, count);
+
+                    customer.getReservations().remove(key);
+                }
+            }
             reserve(customer, Car.getKey(location), location, queryCarsPrice(location));
         }
 
         // Reserve a room if needed
         if (room) {
-            if (!roomsStub.reserveRoom(customerID, location)) return false;
+            if (!roomsStub.reserveRoom(customerID, location)) {
+                for (int flightNum : reservedFlights) {
+                    String key = Flight.getKey(flightNum);
+                    int count = flightsStub.queryFlight(flightNum);
+
+                    flightsStub.removeReservationFlight(key, count);
+
+                    customer.getReservations().remove(key);
+                }
+                String key = Car.getKey(location);
+                int count = carsStub.queryCars(key);
+                carsStub.removeReservationCar(key, count);
+                customer.getReservations().remove(key);
+            }
             reserve(customer, Room.getKey(location), location, queryRoomsPrice(location));
         }
 
