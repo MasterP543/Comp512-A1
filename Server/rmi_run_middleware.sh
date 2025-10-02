@@ -3,4 +3,4 @@ echo '  $1 - hostname of Flights'
 echo '  $2 - hostname of Cars'
 echo '  $3 - hostname of Rooms'
 
-java -cp Server:. Server.TCP.TCPMiddleware $1 $2 $3
+java -Djava.rmi.server.codebase=file:$(pwd)/ Server.RMI.RMIMiddleware $1 $2 $3
