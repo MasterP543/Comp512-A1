@@ -86,6 +86,8 @@ public class Customer extends RMItem
 		return m_reservations;
 	}
 
+	public void removeReservation(String key) {m_reservations.remove(key);}
+
 	public Object clone()
 	{
 		Customer obj = (Customer)super.clone();

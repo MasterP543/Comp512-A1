@@ -220,7 +220,7 @@ public class Middleware implements IResourceManager {
 
                    flightsStub.removeReservationFlight(r_key, count);
 
-                   customer.getReservations().remove(r_key);
+                   customer.removeReservation(r_key);
                }
            }
             reserve(customer, key, location, price);
@@ -235,7 +235,7 @@ public class Middleware implements IResourceManager {
 
                     flightsStub.removeReservationFlight(key, count);
 
-                    customer.getReservations().remove(key);
+                    customer.removeReservation(key);;
                 }
             }
             reserve(customer, Car.getKey(location), location, queryCarsPrice(location));
@@ -250,12 +250,12 @@ public class Middleware implements IResourceManager {
 
                     flightsStub.removeReservationFlight(key, count);
 
-                    customer.getReservations().remove(key);
+                    customer.removeReservation(key);;
                 }
                 String key = Car.getKey(location);
                 int count = carsStub.queryCars(key);
                 carsStub.removeReservationCar(key, count);
-                customer.getReservations().remove(key);
+                customer.removeReservation(key);
             }
             reserve(customer, Room.getKey(location), location, queryRoomsPrice(location));
         }

@@ -87,19 +87,9 @@ public class TCPMiddlewareThread extends Thread{
             int flightNumber = (int) request.args.get(1);
             response.result = reserveFlight(customerID, flightNumber);
         } else if (method.contains("Car")) {
-            response = sendToServer(cars_ServerHost, socketPort, request);
-            if (response != null && (boolean) response.result) {
-                int customerID = (int) request.args.get(0);
-                String location = (String) request.args.get(1);
-                response.result = reserveCar(customerID, location);
-            }
+            response.result = reserveCar((int) request.args.get(0), (String) request.args.get(1));
         } else if (method.contains("Room")) {
-            response = sendToServer(rooms_ServerHost, socketPort, request);
-            if (response != null && (boolean) response.result) {
-                int customerID = (int) request.args.get(0);
-                String location = (String) request.args.get(1);
-                response.result = reserveRoom(customerID, location);
-            }
+            response.result = reserveRoom((int) request.args.get(0), (String) request.args.get(1));
         }
         return response;
     }
@@ -131,8 +121,6 @@ public class TCPMiddlewareThread extends Thread{
         List<Object> args = new ArrayList<>();
         args.add(location);
 
-
-
         if (car) {
             Request req = new Request("QueryCars", args);
             response = sendToServer(cars_ServerHost, socketPort, req);
@@ -163,8 +151,8 @@ public class TCPMiddlewareThread extends Thread{
             if (!reserveRoom(customerID, location)) {
                 if (car) {
                     req = new Request("RemoveReservationCar", List.of(Car.getKey((location)), cars_count));
-                    customers.getCustomer(customerID).getReservations().remove(Car.getKey((location)));
-                    sendToServer(rooms_ServerHost, socketPort, req);
+                    customers.getCustomer(customerID).removeReservation(Car.getKey(location));
+                    sendToServer(cars_ServerHost, socketPort, req);
                 }
                 response.result = false;
                 return response;
@@ -180,12 +168,14 @@ public class TCPMiddlewareThread extends Thread{
                 Request req;
                 if (car) {
                     req = new Request("RemoveReservationCar", List.of(Car.getKey((location)), cars_count));
-                    customers.getCustomer(customerID).getReservations().remove(Car.getKey((location)));
-                    sendToServer(rooms_ServerHost, socketPort, req);
+                    customers.getCustomer(customerID).removeReservation(Car.getKey(location));
+                    sendToServer(cars_ServerHost, socketPort, req);
                 }
                 if (room) {
-                    req = new Request("RemoveReservationRoom", List.of(Car.getKey((location)), rooms_count));
-                    customers.getCustomer(customerID).getReservations().remove(Car.getKey((location)));
+                    req = new Request("RemoveReservationRoom", List.of(Room.getKey((location)), rooms_count));
+                    customers.getCustomer(customerID).removeReservation(Room.getKey(location));
+
+
                     sendToServer(rooms_ServerHost, socketPort, req);
                 }
 
@@ -208,7 +198,7 @@ public class TCPMiddlewareThread extends Thread{
         for (int fn: flightNumbers) {
             req.args = List.of(fn);
             sendToServer(flights_ServerHost, socketPort, req);
-            customer.getReservations().remove(Flight.getKey(fn));
+            customer.removeReservation(Flight.getKey(fn));
         }
     }
 
