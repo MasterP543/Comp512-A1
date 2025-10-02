@@ -1,0 +1,1 @@
+javac -cp . Client/Client/*.java Server/Server/*/*.java
