@@ -115,6 +115,8 @@ public class TCPMiddlewareThread extends Thread{
         String location = (String) request.args.get(request.args.size()-3);
         boolean car = Boolean.parseBoolean((String) request.args.get(request.args.size()-2));
         boolean room = Boolean.parseBoolean((String) request.args.getLast());
+        int cars_count = 0;
+        int rooms_count = 0;
 
         for (int flightNumber : flightNumbers) {
             List<Object> args = new ArrayList<>();
@@ -129,11 +131,20 @@ public class TCPMiddlewareThread extends Thread{
         List<Object> args = new ArrayList<>();
         args.add(location);
 
+
+
         if (car) {
             Request req = new Request("QueryCars", args);
             response = sendToServer(cars_ServerHost, socketPort, req);
             if (response == null) return badResponse();
-            if ((int) response.result < 1) {
+            cars_count = (int) response.result;
+
+            if (cars_count < 1) {
+                response.result = false;
+                return response;
+            }
+
+            if (!reserveCar(customerID, location)) {
                 response.result = false;
                 return response;
             }
@@ -143,24 +154,64 @@ public class TCPMiddlewareThread extends Thread{
             Request req = new Request("QueryRooms", args);
             response = sendToServer(rooms_ServerHost, socketPort, req);
             if (response == null) return badResponse();
-            if ((int) response.result < 1) {
+            rooms_count = (int) response.result;
+            if (rooms_count < 1) {
                 response.result = false;
                 return response;
             }
+
+            if (!reserveRoom(customerID, location)) {
+                if (car) {
+                    req = new Request("RemoveReservationCar", List.of(Car.getKey((location)), cars_count));
+                    customers.getCustomer(customerID).getReservations().remove(Car.getKey((location)));
+                    sendToServer(rooms_ServerHost, socketPort, req);
+                }
+                response.result = false;
+                return response;
+            }
+
+
         }
 
-
+        Vector<Integer> reservedFlights = new Vector<Integer> ();
         for (int flightNumber : flightNumbers) {
-            reserveFlight(customerID, flightNumber);
-        }
+            if (!reserveFlight(customerID, flightNumber)){
+                deleteFlightReservations(reservedFlights, customerID);
+                Request req;
+                if (car) {
+                    req = new Request("RemoveReservationCar", List.of(Car.getKey((location)), cars_count));
+                    customers.getCustomer(customerID).getReservations().remove(Car.getKey((location)));
+                    sendToServer(rooms_ServerHost, socketPort, req);
+                }
+                if (room) {
+                    req = new Request("RemoveReservationRoom", List.of(Car.getKey((location)), rooms_count));
+                    customers.getCustomer(customerID).getReservations().remove(Car.getKey((location)));
+                    sendToServer(rooms_ServerHost, socketPort, req);
+                }
 
-        reserveCar(customerID, location);
-        reserveRoom(customerID, location);
+                response.result = false;
+                return response;
+
+            }
+
+            reservedFlights.addElement(flightNumber);
+
+        }
 
         response.result = true;
-
         return response;
     }
+
+    private void deleteFlightReservations(Vector<Integer> flightNumbers, int CustomerID) throws IOException {
+        Customer customer = customers.getCustomer(CustomerID);
+        Request req = new Request("removeReservationFlight", List.of(0));
+        for (int fn: flightNumbers) {
+            req.args = List.of(fn);
+            sendToServer(flights_ServerHost, socketPort, req);
+            customer.getReservations().remove(Flight.getKey(fn));
+        }
+    }
+
     private Response badResponse() {
         Response response = new Response();
         response.result = false;
